@@ -5,13 +5,12 @@ import Cron exposing (Atom(..), Cron(..), Expr(..), Term(..))
 
 toString : Cron -> String
 toString (Cron m h dm mo dw) =
-    "At "
-        ++ String.join ", "
-            [ time m h
-            , dom dm
-            , month mo
-            , dow dw
-            ]
+    String.join ", "
+        [ time m h
+        , dom dm
+        , month mo
+        , dow dw
+        ]
         ++ "."
 
 
@@ -26,7 +25,7 @@ time : Expr -> Expr -> String
 time m h =
     case ( m, h ) of
         ( Single (Simple (Numeric m_)), Single (Simple (Numeric h_)) ) ->
-            String.fromInt h_ ++ ":" ++ String.fromInt m_
+            "at " ++ String.fromInt h_ ++ ":" ++ String.fromInt m_
 
         _ ->
             minute m ++ ", " ++ hour h
@@ -62,7 +61,17 @@ minuteTerm term =
             "every " ++ ordinalFraction int ++ " minute"
 
         Simple atom ->
-            atomToString atom ++ " past"
+            minuteAtomToString atom ++ " minutes past"
+
+
+minuteAtomToString : Atom -> String
+minuteAtomToString atom =
+    case atom of
+        Numeric a ->
+            "at " ++ String.fromInt a
+
+        Range a b ->
+            "from " ++ String.fromInt a ++ " through " ++ String.fromInt b
 
 
 
@@ -95,7 +104,17 @@ hourTerm term =
             "every " ++ ordinalFraction int ++ " hour"
 
         Simple atom ->
-            "past " ++ atomToString atom
+            hourAtomToString atom
+
+
+hourAtomToString : Atom -> String
+hourAtomToString atom =
+    case atom of
+        Numeric a ->
+            "past " ++ String.fromInt a
+
+        Range a b ->
+            "from " ++ String.fromInt a ++ " through " ++ String.fromInt b ++ " o'clock"
 
 
 
@@ -128,7 +147,17 @@ domTerm term =
             "every " ++ ordinalFraction int ++ " day of the month"
 
         Simple atom ->
-            "on the " ++ atomToFractionString atom ++ " day of the month"
+            domAtomToFractionString atom ++ " day of the month"
+
+
+domAtomToFractionString : Atom -> String
+domAtomToFractionString atom =
+    case atom of
+        Numeric a ->
+            "on the " ++ ordinalFraction a
+
+        Range a b ->
+            "from the " ++ ordinalFraction a ++ " through the " ++ ordinalFraction b
 
 
 
@@ -240,7 +269,7 @@ dow a =
             dowTerm term
 
         Multiple terms ->
-            List.map hourTerm terms
+            List.map dowTerm terms
                 |> String.join " and "
 
         Every ->

@@ -2,7 +2,7 @@ module CronTest exposing (..)
 
 import Cron exposing (Atom(..), Cron(..), Expr(..), Term(..))
 import Expect exposing (Expectation, fail, pass)
-import Parser exposing (Problem(..))
+import Parser exposing (DeadEnd, Problem(..))
 import Test exposing (..)
 
 
@@ -187,6 +187,11 @@ rain =
                             ]
                         )
                         (Cron.fromString "* 2-5 1-2 1 7-8")
+            , test "double range" <|
+                \() ->
+                    Expect.equal
+                        (Err [ { col = 8, problem = Problem "not a valid int", row = 1 }, { col = 8, problem = Problem "not a valid int", row = 1 }, { col = 8, problem = ExpectingSymbol "*", row = 1 }, { col = 8, problem = Problem "not a valid int", row = 1 }, { col = 8, problem = Problem "not a valid int", row = 1 }, { col = 8, problem = Problem "not a valid int", row = 1 }, { col = 8, problem = Problem "not a valid int", row = 1 }, { col = 8, problem = ExpectingSymbol "*", row = 1 }, { col = 8, problem = Problem "not a valid int", row = 1 }, { col = 8, problem = Problem "not a valid int", row = 1 }, { col = 8, problem = Problem "not a list!", row = 1 }, { col = 8, problem = ExpectingSymbol "*", row = 1 } ])
+                        (Cron.fromString "* * 1-2-3 * *")
             ]
         , describe "steps"
             [ test "every 0 step" <|
@@ -194,18 +199,41 @@ rain =
                     Expect.equal
                         (Err [ { col = 12, problem = Problem "A step value of 0 was seen. Step values must be 1 or higher.", row = 1 }, { col = 12, problem = Problem "A step value of 0 was seen. Step values must be 1 or higher.", row = 1 }, { col = 9, problem = Problem "not a list!", row = 1 }, { col = 9, problem = ExpectingSymbol "*", row = 1 } ])
                         (Cron.fromString "* * * * 1/0")
+            , test "Multiple steps" <|
+                \() ->
+                    expectFirstProblem
+                        (Problem "not a valid int")
+                        (Cron.fromString "* * * 1-2/1-3 *")
+            , test "Multiple steps at the end" <|
+                \() ->
+                    expectFirstProblem
+                        ExpectingEnd
+                        (Cron.fromString "* * * * 1-2/1-3")
             ]
         , describe "sequences"
             [ test "out of range" <|
                 \() ->
-                    Expect.equal
-                        (Err
-                            [ { row = 1
-                              , col = 19
-                              , problem = Problem "day of month, the third part, is 32. I was expecting values in the range from 1 to 31."
-                              }
-                            ]
-                        )
+                    expectFirstProblem
+                        (Problem "day of month, the third part, is 32. I was expecting values in the range from 1 to 31.")
                         (Cron.fromString "1,2 * 30,31,32 * *")
             ]
         ]
+
+
+
+-----------------------------------------------
+-- Helpers
+-----------------------------------------------
+
+
+expectFirstProblem : Problem -> Result (List DeadEnd) Cron -> Expectation
+expectFirstProblem problem result =
+    case result of
+        Ok cron ->
+            fail ("Parsing was expected to fail with " ++ Debug.toString problem ++ " but it returned " ++ Debug.toString cron)
+
+        Err (head :: _) ->
+            Expect.equal head.problem problem
+
+        Err [] ->
+            fail "No problems returned"

@@ -45,6 +45,7 @@ cron =
         |= expr
         |= expr
         |= expr
+        |. end
         |> andThen checkCron
 
 
