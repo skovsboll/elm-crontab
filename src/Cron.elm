@@ -220,11 +220,11 @@ int =
 
 checkCron : Cron -> Parser Cron
 checkCron (Cron minute hour dom month dow) =
-    checkExpr 0 59 "minutes, the first part, " minute
-        |> andThen (always (checkExpr 0 23 "hours, the second part, " hour))
-        |> andThen (always (checkExpr 1 31 "day of month, the third part, " dom))
-        |> andThen (always (checkExpr 1 12 "month, the fourth part, " month))
-        |> andThen (always (checkExpr 0 6 "day of week, the fifth part, " dow))
+    checkExpr 0 59 "minutes, the first number, " minute
+        |> andThen (always (checkExpr 0 23 "hours, the second number, " hour))
+        |> andThen (always (checkExpr 1 31 "day of month, the third number, " dom))
+        |> andThen (always (checkExpr 1 12 "month, the fourth number, " month))
+        |> andThen (always (checkExpr 0 6 "day of week, the fifth number, " dow))
         |> map (\_ -> Cron minute hour dom month dow)
 
 
