@@ -13,12 +13,12 @@ sunshine =
             [ test "lots of spaces" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron (Single (Simple (Literal 0))) (Single (Simple (Literal 12))) (Single (Simple (Literal 1))) (Single (Simple (Literal 1))) (Single (Simple (Literal 2)))))
+                        (Ok (Cron (Single (Simple (Numeric 0))) (Single (Simple (Numeric 12))) (Single (Simple (Numeric 1))) (Single (Simple (Numeric 1))) (Single (Simple (Numeric 2)))))
                         (Cron.fromString "    0   12    1 1 2   ")
             , test "zero prefixed" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron (Single (Simple (Literal 0))) (Single (Simple (Literal 12))) (Single (Simple (Literal 1))) (Single (Simple (Literal 1))) (Single (Simple (Literal 2)))))
+                        (Ok (Cron (Single (Simple (Numeric 0))) (Single (Simple (Numeric 12))) (Single (Simple (Numeric 1))) (Single (Simple (Numeric 1))) (Single (Simple (Numeric 2)))))
                         (Cron.fromString "00 012 01 01 02")
             ]
         , describe "stars"
@@ -30,7 +30,7 @@ sunshine =
             , test "combinations" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron Every (Single (Simple (Literal 1))) Every (Single (Simple (Literal 1))) Every))
+                        (Ok (Cron Every (Single (Simple (Numeric 1))) Every (Single (Simple (Numeric 1))) Every))
                         (Cron.fromString "    *   1 *   1  *  ")
             ]
         , describe "steps"
@@ -39,6 +39,11 @@ sunshine =
                     Expect.equal
                         (Ok (Cron Every Every Every Every (Single (EveryStep 1))))
                         (Cron.fromString "* * * * */1")
+            , test "every 1 step" <|
+                \() ->
+                    Expect.equal
+                        (Ok (Cron Every Every Every Every (Single (Step (Numeric 1) 1))))
+                        (Cron.fromString "* * * * 1/1")
             , test "every third step" <|
                 \() ->
                     Expect.equal
@@ -47,7 +52,7 @@ sunshine =
             , test "every third step on the 2nd" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron Every Every Every Every (Single (Step (Literal 2) 3))))
+                        (Ok (Cron Every Every Every Every (Single (Step (Numeric 2) 3))))
                         (Cron.fromString "* * * * 2/3")
             , test "every third step on the second to fourth" <|
                 \() ->
@@ -69,24 +74,24 @@ sunshine =
             , test "combinations" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron Every (Single (Simple (Range 2 5))) (Single (Simple (Range 1 2))) (Single (Simple (Literal 1))) (Single (Simple (Range 1 2)))))
+                        (Ok (Cron Every (Single (Simple (Range 2 5))) (Single (Simple (Range 1 2))) (Single (Simple (Numeric 1))) (Single (Simple (Range 1 2)))))
                         (Cron.fromString "* 2-5 1-2 1 1-2")
             ]
         , describe "sequences"
             [ test "sequence of literals" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron (Multiple [ Simple (Literal 1), Simple (Literal 2) ]) Every Every Every Every))
+                        (Ok (Cron (Multiple [ Simple (Numeric 1), Simple (Numeric 2) ]) Every Every Every Every))
                         (Cron.fromString "1,2 * * * *")
             , test "sequence of ranges and literals" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron (Multiple [ Simple (Literal 1), Simple (Range 2 4) ]) Every Every Every Every))
+                        (Ok (Cron (Multiple [ Simple (Numeric 1), Simple (Range 2 4) ]) Every Every Every Every))
                         (Cron.fromString "1,2-4 * * * *")
             , test "sequence of ranges, literals and steps" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron (Multiple [ Simple (Literal 1), Step (Range 2 4) 3 ]) Every Every Every Every))
+                        (Ok (Cron (Multiple [ Simple (Numeric 1), Step (Range 2 4) 3 ]) Every Every Every Every))
                         (Cron.fromString "1,2-4/3 * * * *")
             ]
         ]
@@ -182,6 +187,13 @@ rain =
                             ]
                         )
                         (Cron.fromString "* 2-5 1-2 1 7-8")
+            ]
+        , describe "steps"
+            [ test "every 0 step" <|
+                \() ->
+                    Expect.equal
+                        (Err [ { col = 12, problem = Problem "A step value of 0 was seen. Step values must be 1 or higher.", row = 1 }, { col = 12, problem = Problem "A step value of 0 was seen. Step values must be 1 or higher.", row = 1 }, { col = 9, problem = Problem "not a list!", row = 1 }, { col = 9, problem = ExpectingSymbol "*", row = 1 } ])
+                        (Cron.fromString "* * * * 1/0")
             ]
         , describe "sequences"
             [ test "out of range" <|

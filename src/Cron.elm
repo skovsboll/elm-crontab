@@ -20,7 +20,7 @@ type Term
 
 
 type Atom
-    = Literal Int
+    = Numeric Int
     | Range Int Int
 
 
@@ -119,6 +119,7 @@ term =
         , everyStepTerm
         , map Simple atom
         ]
+        |> andThen checkStep
 
 
 stepTerm : Parser Term
@@ -137,6 +138,28 @@ everyStepTerm =
         |= int
 
 
+checkStep : Term -> Parser Term
+checkStep term_ =
+    let
+        checkHelper : Int -> Parser Term
+        checkHelper a =
+            if a < 1 then
+                problem ("A step value of " ++ String.fromInt a ++ " was seen. Step values must be 1 or higher.")
+
+            else
+                succeed term_
+    in
+    case term_ of
+        Step _ a ->
+            checkHelper a
+
+        EveryStep a ->
+            checkHelper a
+
+        Simple atom_ ->
+            succeed term_
+
+
 
 -----------------------------------------------
 -- Atoms
@@ -151,13 +174,13 @@ atom : Parser Atom
 atom =
     oneOf
         [ backtrackable rangeAtom
-        , literalAtom
+        , numericAtom
         ]
 
 
-literalAtom : Parser Atom
-literalAtom =
-    map Literal int
+numericAtom : Parser Atom
+numericAtom =
+    map Numeric int
 
 
 rangeAtom : Parser Atom
@@ -166,6 +189,12 @@ rangeAtom =
         |= int
         |. symbol "-"
         |= int
+
+
+
+-----------------------------------------------
+-- Integers with leading zeroes
+-----------------------------------------------
 
 
 int : Parser Int
@@ -238,9 +267,9 @@ checkTerm min max descriptor term_ =
 checkAtom : Int -> Int -> String -> Atom -> Parser Atom
 checkAtom min max descriptor value_ =
     case value_ of
-        Literal i ->
+        Numeric i ->
             checkInt min max descriptor i
-                |> map (always (Literal i))
+                |> map (always (Numeric i))
 
         Range a b ->
             checkInt min max descriptor a
