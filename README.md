@@ -72,7 +72,7 @@ Cron.fromString "1,2 * 30,31,32 * *"
 
 ## Where to go from here?
 
-See the [tests](tree/main/tests)
+See the [tests](https://github.com/skovsboll/elm-crontab/tree/main/tests)
 
 
 ## Caveats
