@@ -1,7 +1,9 @@
 elm-cron
 ===
 
-### A crontab parser and humanizer for the basic UNIX syntax.
+### A crontab parser and humanizer in Elm -- for the basic UNIX syntax only.
+
+Inspired by [rodinalex/elm-cron](https://github.com/rodinalex/elm-cron) but rewritten from scratch using [elm/parser](https://github.com/elm/parser) and elm 0.19.1
 
 ## Installation
 
@@ -69,12 +71,13 @@ Cron.fromString "1,2 * 30,31,32 * *"
 
 Does neither support month abbreviations (JAN, FEB, MAR) nor day-of-week abbreviations (SUN, MON, ...).
 
+No other fancy syntax supported.
+
+
 
 ## Licence 
 
-Free Public License 1.0.0
-
-https://tldrlegal.com/license/free-public-license-1.0.0#summary
+[Free Public License 1.0.0](https://tldrlegal.com/license/free-public-license-1.0.0#summary)
 
 TLDR; Do what you want with it, but don't hold me liable for damages.
 
