@@ -32,7 +32,6 @@ import Cron exposing (Atom(..), Cron(..), Expr(..), Term(..))
 import Humanizer
 
 Humanizer.toString (Cron Every Every (Single (EveryStep 3)) (Single (Simple (Numeric 4))) Every)
-
 -- "every minute, every hour, every third day of the month, in April, all week."
 
 ```
@@ -46,8 +45,8 @@ import Humanizer
 import Parser
 
 case Cron.fromString "30 10 * * 3" of
-    Ok value ->
-        Humanizer.toString value
+    Ok cron ->
+        Humanizer.toString cron
     Err errors ->
         errors
             |> Parser.deadEndsToString
@@ -61,10 +60,19 @@ case Cron.fromString "30 10 * * 3" of
 ```elm
 
 Cron.fromString "1,2 * 30,31,32 * *"
-
--- Err [{ col = 19, problem = Problem ("day of month, the third number, is 32. I was expecting values in the range from 1 to 31."), row = 1 }]
+--Err
+--    [ { col = 19
+--      , problem = Problem "day of month, the third number, is 32. I was expecting values in the range from 1 to 31."
+--      , row = 1
+--      }
+--    ]
 
 ```
+
+
+## Where to go from here?
+
+See the [tests](tree/main/tests)
 
 
 ## Caveats
