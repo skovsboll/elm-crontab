@@ -1,4 +1,4 @@
-elm-cron
+elm-crontab
 ===
 
 ### A crontab parser and humanizer in Elm -- for the basic UNIX syntax only.
