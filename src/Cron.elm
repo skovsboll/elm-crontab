@@ -1,5 +1,24 @@
 module Cron exposing (Atom(..), Cron(..), Expr(..), Month(..), Term(..), WeekDay(..), fromString)
 
+{-| Parses a classic UNIX style crontab string into a data structure from which
+you can extract information.
+
+The main entrypoint is the fromString function.
+
+    Cron.fromString "* * */3 4 *"
+
+fromString returns a Result (List DeadEnd) Cron.
+
+A Cron expression consists of exactly five elements:
+
+    1. Minutes
+    2. Hours
+    3. Day of month (1-31)
+    4. Month (1-12 or jan,feb,...)
+    5. Week day (0-6 or mon, tue, ...)
+
+-}
+
 import Parser exposing (..)
 
 

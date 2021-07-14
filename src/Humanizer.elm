@@ -1,5 +1,17 @@
 module Humanizer exposing (toString)
 
+{-| Expresses a Cron expression in a human readable form.
+
+For example:
+
+    Humanizer.toString (Cron Every Every (Single (EveryStep 3)) (Single (Simple (Particle April))) Every)
+
+Will produce:
+
+"every minute, every hour, every third day of the month, in April, all week."
+
+-}
+
 import Cron exposing (Atom(..), Cron(..), Expr(..), Month(..), Term(..), WeekDay(..))
 
 
