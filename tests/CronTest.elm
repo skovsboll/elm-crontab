@@ -1,6 +1,6 @@
 module CronTest exposing (..)
 
-import Cron exposing (Atom(..), Cron(..), Expr(..), Term(..))
+import Cron exposing (Atom(..), Cron(..), Expr(..), Month(..), Term(..), WeekDay(..))
 import Expect exposing (Expectation, fail, pass)
 import Parser exposing (DeadEnd, Problem(..))
 import Test exposing (..)
@@ -13,12 +13,12 @@ sunshine =
             [ test "lots of spaces" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron (Single (Simple (Numeric 0))) (Single (Simple (Numeric 12))) (Single (Simple (Numeric 1))) (Single (Simple (Numeric 1))) (Single (Simple (Numeric 2)))))
+                        (Ok (Cron (Single (Simple (Particle 0))) (Single (Simple (Particle 12))) (Single (Simple (Particle 1))) (Single (Simple (Particle January))) (Single (Simple (Particle Tuesday)))))
                         (Cron.fromString "    0   12    1 1 2   ")
             , test "zero prefixed" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron (Single (Simple (Numeric 0))) (Single (Simple (Numeric 12))) (Single (Simple (Numeric 1))) (Single (Simple (Numeric 1))) (Single (Simple (Numeric 2)))))
+                        (Ok (Cron (Single (Simple (Particle 0))) (Single (Simple (Particle 12))) (Single (Simple (Particle 1))) (Single (Simple (Particle January))) (Single (Simple (Particle Tuesday)))))
                         (Cron.fromString "00 012 01 01 02")
             ]
         , describe "stars"
@@ -30,7 +30,7 @@ sunshine =
             , test "combinations" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron Every (Single (Simple (Numeric 1))) Every (Single (Simple (Numeric 1))) Every))
+                        (Ok (Cron Every (Single (Simple (Particle 1))) Every (Single (Simple (Particle January))) Every))
                         (Cron.fromString "    *   1 *   1  *  ")
             ]
         , describe "steps"
@@ -42,7 +42,7 @@ sunshine =
             , test "every 1 step" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron Every Every Every Every (Single (Step (Numeric 1) 1))))
+                        (Ok (Cron Every Every Every Every (Single (Step (Particle Monday) 1))))
                         (Cron.fromString "* * * * 1/1")
             , test "every third step" <|
                 \() ->
@@ -52,12 +52,12 @@ sunshine =
             , test "every third step on the 2nd" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron Every Every Every Every (Single (Step (Numeric 2) 3))))
+                        (Ok (Cron Every Every Every Every (Single (Step (Particle Tuesday) 3))))
                         (Cron.fromString "* * * * 2/3")
             , test "every third step on the second to fourth" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron Every Every Every Every (Single (Step (Range 2 4) 3))))
+                        (Ok (Cron Every Every Every Every (Single (Step (Range Tuesday Thursday) 3))))
                         (Cron.fromString "* * * * 2-4/3")
             ]
         , describe "ranges"
@@ -69,30 +69,52 @@ sunshine =
             , test "all ranges" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron (Single (Simple (Range 1 2))) (Single (Simple (Range 1 2))) (Single (Simple (Range 1 2))) (Single (Simple (Range 1 2))) (Single (Simple (Range 1 2)))))
+                        (Ok (Cron (Single (Simple (Range 1 2))) (Single (Simple (Range 1 2))) (Single (Simple (Range 1 2))) (Single (Simple (Range January February))) (Single (Simple (Range Monday Tuesday)))))
                         (Cron.fromString "1-2 1-2 1-2 1-2 1-2")
             , test "combinations" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron Every (Single (Simple (Range 2 5))) (Single (Simple (Range 1 2))) (Single (Simple (Numeric 1))) (Single (Simple (Range 1 2)))))
+                        (Ok (Cron Every (Single (Simple (Range 2 5))) (Single (Simple (Range 1 2))) (Single (Simple (Particle January))) (Single (Simple (Range Monday Tuesday)))))
                         (Cron.fromString "* 2-5 1-2 1 1-2")
             ]
         , describe "sequences"
             [ test "sequence of literals" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron (Multiple [ Simple (Numeric 1), Simple (Numeric 2) ]) Every Every Every Every))
+                        (Ok (Cron (Multiple [ Simple (Particle 1), Simple (Particle 2) ]) Every Every Every Every))
                         (Cron.fromString "1,2 * * * *")
             , test "sequence of ranges and literals" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron (Multiple [ Simple (Numeric 1), Simple (Range 2 4) ]) Every Every Every Every))
+                        (Ok (Cron (Multiple [ Simple (Particle 1), Simple (Range 2 4) ]) Every Every Every Every))
                         (Cron.fromString "1,2-4 * * * *")
             , test "sequence of ranges, literals and steps" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron (Multiple [ Simple (Numeric 1), Step (Range 2 4) 3 ]) Every Every Every Every))
+                        (Ok (Cron (Multiple [ Simple (Particle 1), Step (Range 2 4) 3 ]) Every Every Every Every))
                         (Cron.fromString "1,2-4/3 * * * *")
+            ]
+        , describe "ordinals"
+            [ test "named week days" <|
+                \() ->
+                    Expect.equal
+                        (Ok (Cron Every Every Every Every (Single (Simple (Particle Sunday)))))
+                        (Cron.fromString "* * * * SUN")
+            , test "named week days and steps" <|
+                \() ->
+                    Expect.equal
+                        (Ok (Cron Every Every Every Every (Single (Step (Particle Wednesday) 2))))
+                        (Cron.fromString "* * * * wed/2")
+            , test "named months" <|
+                \() ->
+                    Expect.equal
+                        (Ok (Cron Every Every Every (Single (Simple (Particle February))) Every))
+                        (Cron.fromString "* *  *  FEB *")
+            , test "named months in multiple ranges" <|
+                \() ->
+                    Expect.equal
+                        (Ok (Cron Every Every Every (Multiple [ Simple (Range February May), Simple (Range July October) ]) Every))
+                        (Cron.fromString "* * * FEB-may,jul-oct *")
             ]
         ]
 
@@ -100,67 +122,55 @@ sunshine =
 rain : Test
 rain =
     describe "rain"
-        [ describe "combinations"
-            [ test "named week days not supported" <|
-                \() ->
-                    expectFirstProblem
-                        (Problem "not a valid int")
-                        (Cron.fromString "* * * * SUN")
-            , test "named months not supported" <|
-                \() ->
-                    expectFirstProblem
-                        (Problem "not a valid int")
-                        (Cron.fromString "* * FEB * 1")
-            ]
-        , describe "out of range"
+        [ describe "out of range"
             [ test "minutes outside range" <|
                 \() ->
                     expectFirstProblem
-                        (Problem "minutes, the first number, is 61. I was expecting values in the range from 0 to 59.")
+                        (Problem "Expected an integer from 0 through 59.")
                         (Cron.fromString "61 0 0 0 0")
             , test "hours outside range" <|
                 \() ->
                     expectFirstProblem
-                        (Problem "hours, the second number, is 25. I was expecting values in the range from 0 to 23.")
+                        (Problem "Expected an integer from 0 through 23.")
                         (Cron.fromString "0 25 0 0 0")
             , test "DOM outside range" <|
                 \() ->
                     expectFirstProblem
-                        (Problem "day of month, the third number, is 32. I was expecting values in the range from 1 to 31.")
+                        (Problem "Expected an integer from 1 through 31.")
                         (Cron.fromString "0 0 32 0 0")
             , test "month outside range" <|
                 \() ->
                     expectFirstProblem
-                        (Problem "month, the fourth number, is 13. I was expecting values in the range from 1 to 12.")
+                        (Problem "Expected an integer from 1 through 12.")
                         (Cron.fromString "0 0 1 13 0")
             , test "DOW outside range" <|
                 \() ->
                     expectFirstProblem
-                        (Problem "day of week, the fifth number, is 10. I was expecting values in the range from 0 to 6.")
+                        (Problem "Expected an integer from 0 through 6.")
                         (Cron.fromString "0 0 3 1 10")
             ]
         , describe "ranges"
             [ test "out of range" <|
                 \() ->
                     expectFirstProblem
-                        (Problem "day of week, the fifth number, is 7. I was expecting values in the range from 0 to 6.")
+                        (Problem "Expected an integer from 0 through 6.")
                         (Cron.fromString "* 2-5 1-2 1 7-8")
             , test "double range" <|
                 \() ->
                     expectFirstProblem
-                        (Problem "not a valid int")
+                        (Problem "Expected the name of a month (jan, feb, mar etc...) or a number from 1 through 12.")
                         (Cron.fromString "* * 1-2-3 * *")
             ]
         , describe "steps"
             [ test "every 0 step" <|
                 \() ->
                     expectFirstProblem
-                        (Problem "A step value of 0 was seen. Step values must be 1 or higher.")
-                        (Cron.fromString "* * * * 1/0")
+                        (Problem "Expected the name of a week day (sun, mon, tue etc...) or a number from 0 through 6.")
+                        (Cron.fromString "* * * 1/0 *")
             , test "Multiple steps" <|
                 \() ->
                     expectFirstProblem
-                        (Problem "not a valid int")
+                        (Problem "Expected the name of a week day (sun, mon, tue etc...) or a number from 0 through 6.")
                         (Cron.fromString "* * * 1-2/1-3 *")
             , test "Multiple steps at the end" <|
                 \() ->
@@ -172,7 +182,7 @@ rain =
             [ test "out of range" <|
                 \() ->
                     expectFirstProblem
-                        (Problem "day of month, the third number, is 32. I was expecting values in the range from 1 to 31.")
+                        (Problem "Expected an integer from 1 through 31.")
                         (Cron.fromString "1,2 * 30,31,32 * *")
             ]
         ]

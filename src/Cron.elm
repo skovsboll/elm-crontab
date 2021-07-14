@@ -1,27 +1,52 @@
-module Cron exposing (Atom(..), Cron(..), Expr(..), Term(..), fromString)
+module Cron exposing (Atom(..), Cron(..), Expr(..), Month(..), Term(..), WeekDay(..), fromString)
 
 import Parser exposing (..)
 
 
 type Cron
-    = Cron Expr Expr Expr Expr Expr
+    = Cron (Expr Int) (Expr Int) (Expr Int) (Expr Month) (Expr WeekDay)
 
 
-type Expr
-    = Single Term
-    | Multiple (List Term)
+type Expr a
+    = Single (Term a)
+    | Multiple (List (Term a))
     | Every
 
 
-type Term
-    = Step Atom Int
+type Term a
+    = Step (Atom a) Int
     | EveryStep Int
-    | Simple Atom
+    | Simple (Atom a)
 
 
-type Atom
-    = Numeric Int
-    | Range Int Int
+type Atom a
+    = Particle a
+    | Range a a
+
+
+type Month
+    = January
+    | February
+    | March
+    | April
+    | May
+    | June
+    | July
+    | August
+    | September
+    | October
+    | November
+    | December
+
+
+type WeekDay
+    = Sunday
+    | Monday
+    | Tuesday
+    | Wednesday
+    | Thursday
+    | Friday
+    | Saturday
 
 
 {-| Parse a crontab string to a Cron expression
@@ -40,13 +65,12 @@ fromString input =
 cron : Parser Cron
 cron =
     succeed Cron
-        |= expr
-        |= expr
-        |= expr
-        |= expr
-        |= expr
+        |= expr (int 0 59)
+        |= expr (int 0 23)
+        |= expr (int 1 31)
+        |= expr month
+        |= expr weekDay
         |. end
-        |> andThen checkCron
 
 
 
@@ -55,25 +79,25 @@ cron =
 -----------------------------------------------
 
 
-expr : Parser Expr
-expr =
+expr : Parser a -> Parser (Expr a)
+expr particle =
     succeed identity
         |. spaces
         |= oneOf
-            [ singleOrMulti
+            [ singleOrMulti particle
             , backtrackable everyExpr
             ]
         |. spaces
 
 
-everyExpr : Parser Expr
+everyExpr : Parser (Expr a)
 everyExpr =
     map (always Every) (symbol "*")
 
 
-singleOrMulti : Parser Expr
-singleOrMulti =
-    backtrackable multiExpr
+singleOrMulti : Parser a -> Parser (Expr a)
+singleOrMulti particle =
+    backtrackable (multiExpr particle)
         |> andThen
             (\listTerm ->
                 case listTerm of
@@ -88,21 +112,21 @@ singleOrMulti =
             )
 
 
-multiExpr : Parser (List Term)
-multiExpr =
-    backtrackable (loop [] multipleTermsHelp)
+multiExpr : Parser a -> Parser (List (Term a))
+multiExpr particle =
+    backtrackable (loop [] (multipleTermsHelp particle))
 
 
-multipleTermsHelp : List Term -> Parser (Step (List Term) (List Term))
-multipleTermsHelp revTerms =
+multipleTermsHelp : Parser a -> List (Term a) -> Parser (Step (List (Term a)) (List (Term a)))
+multipleTermsHelp particle revTerms =
     oneOf
         [ backtrackable
             (succeed (\term_ -> Loop (term_ :: revTerms))
-                |= term
+                |= term particle
                 |. symbol ","
             )
         , succeed (\term_ -> Done (List.reverse (term_ :: revTerms)))
-            |= term
+            |= term particle
         , succeed () |> andThen (always (problem "not a list!"))
         ]
 
@@ -113,52 +137,34 @@ multipleTermsHelp revTerms =
 -----------------------------------------------
 
 
-term : Parser Term
-term =
+term : Parser a -> Parser (Term a)
+term particle =
     oneOf
-        [ backtrackable stepTerm
+        [ backtrackable (stepTerm particle)
         , everyStepTerm
-        , map Simple atom
+        , map Simple (atom particle)
         ]
-        |> andThen checkStep
 
 
-stepTerm : Parser Term
-stepTerm =
+stepTerm : Parser a -> Parser (Term a)
+stepTerm particle =
     succeed Step
-        |= lazy (always atom)
+        |= lazy (always (atom particle))
         |. symbol "/"
-        |= int
+        |= int 1 stepMax
 
 
-everyStepTerm : Parser Term
+stepMax : number
+stepMax =
+    365
+
+
+everyStepTerm : Parser (Term a)
 everyStepTerm =
     succeed EveryStep
         |. symbol "*"
         |. symbol "/"
-        |= int
-
-
-checkStep : Term -> Parser Term
-checkStep term_ =
-    let
-        checkHelper : Int -> Parser Term
-        checkHelper a =
-            if a < 1 then
-                problem ("A step value of " ++ String.fromInt a ++ " was seen. Step values must be 1 or higher.")
-
-            else
-                succeed term_
-    in
-    case term_ of
-        Step _ a ->
-            checkHelper a
-
-        EveryStep a ->
-            checkHelper a
-
-        Simple atom_ ->
-            succeed term_
+        |= int 1 stepMax
 
 
 
@@ -171,41 +177,45 @@ checkStep term_ =
 -----------------------------------------------
 
 
-atom : Parser Atom
-atom =
+atom : Parser a -> Parser (Atom a)
+atom particle =
     oneOf
-        [ backtrackable rangeAtom
-        , numericAtom
+        [ backtrackable (rangeAtom particle)
+        , singleAtom particle
         ]
 
 
-numericAtom : Parser Atom
-numericAtom =
-    map Numeric int
+singleAtom : Parser a -> Parser (Atom a)
+singleAtom particle =
+    map Particle particle
 
 
-rangeAtom : Parser Atom
-rangeAtom =
+rangeAtom : Parser a -> Parser (Atom a)
+rangeAtom particle =
     succeed Range
-        |= int
+        |= particle
         |. symbol "-"
-        |= int
+        |= particle
 
 
 
 -----------------------------------------------
--- Integers with leading zeroes
+-- Int particle
 -----------------------------------------------
 
 
-int : Parser Int
-int =
+int : Int -> Int -> Parser Int
+int min max =
     getChompedString (chompWhile Char.isDigit)
         |> andThen
             (\i ->
                 case String.toInt i of
                     Just i2 ->
-                        succeed i2
+                        if i2 >= min && i2 <= max then
+                            succeed i2
+
+                        else
+                            problem ("Expected an integer from " ++ String.fromInt min ++ " through " ++ String.fromInt max ++ ".")
 
                     Nothing ->
                         problem "not a valid int"
@@ -214,74 +224,193 @@ int =
 
 
 -----------------------------------------------
--- Range checks
+-- Month particle
 -----------------------------------------------
 
 
-checkCron : Cron -> Parser Cron
-checkCron (Cron minute hour dom month dow) =
-    checkExpr 0 59 "minutes, the first number, " minute
-        |> andThen (always (checkExpr 0 23 "hours, the second number, " hour))
-        |> andThen (always (checkExpr 1 31 "day of month, the third number, " dom))
-        |> andThen (always (checkExpr 1 12 "month, the fourth number, " month))
-        |> andThen (always (checkExpr 0 6 "day of week, the fifth number, " dow))
-        |> map (\_ -> Cron minute hour dom month dow)
+month : Parser Month
+month =
+    oneOf
+        [ monthString
+        , int 1 12 |> andThen monthFromInt
+        ]
 
 
-checkExpr : Int -> Int -> String -> Expr -> Parser Expr
-checkExpr min max descriptor expr_ =
-    case expr_ of
-        Single v ->
-            checkTerm min max descriptor v
-                |> map (always (Single v))
-
-        Multiple values ->
-            case values of
-                h :: rest ->
-                    List.foldl (\val acc -> andThen (\_ -> checkTerm min max descriptor val) acc) (checkTerm min max descriptor h) rest
-                        |> map (always (Multiple values))
-
-                [] ->
-                    problem "empty list"
-
-        Every ->
-            succeed expr_
+monthString : Parser Month
+monthString =
+    chompWhile Char.isAlpha
+        |> getChompedString
+        |> andThen monthFromString
 
 
-checkTerm : Int -> Int -> String -> Term -> Parser Term
-checkTerm min max descriptor term_ =
-    case term_ of
-        Step val step ->
-            checkInt min max descriptor step
-                |> andThen (always (checkAtom min max descriptor val))
-                |> map (always (Step val step))
+monthFromInt : Int -> Parser Month
+monthFromInt i =
+    case i of
+        1 ->
+            succeed January
 
-        EveryStep i ->
-            checkInt 1 1000 descriptor i
-                |> map (always EveryStep i)
+        2 ->
+            succeed February
 
-        Simple atom_ ->
-            checkAtom min max descriptor atom_
-                |> map (always Simple atom_)
+        3 ->
+            succeed March
+
+        4 ->
+            succeed April
+
+        5 ->
+            succeed May
+
+        6 ->
+            succeed June
+
+        7 ->
+            succeed July
+
+        8 ->
+            succeed August
+
+        9 ->
+            succeed September
+
+        10 ->
+            succeed October
+
+        11 ->
+            succeed November
+
+        12 ->
+            succeed December
+
+        _ ->
+            problem monthHelpMessage
 
 
-checkAtom : Int -> Int -> String -> Atom -> Parser Atom
-checkAtom min max descriptor value_ =
-    case value_ of
-        Numeric i ->
-            checkInt min max descriptor i
-                |> map (always (Numeric i))
-
-        Range a b ->
-            checkInt min max descriptor a
-                |> andThen (always (checkInt min max descriptor b))
-                |> map (always (Range a b))
+monthHelpMessage : String
+monthHelpMessage =
+    "Expected the name of a month (jan, feb, mar etc...) or a number from 1 through 12."
 
 
-checkInt : Int -> Int -> String -> Int -> Parser Int
-checkInt min max descriptor i =
-    if min > i || max < i then
-        problem (descriptor ++ "is " ++ String.fromInt i ++ ". I was expecting values in the range from " ++ String.fromInt min ++ " to " ++ String.fromInt max ++ ".")
+monthFromString : String -> Parser Month
+monthFromString string =
+    case String.toLower string of
+        "jan" ->
+            succeed January
 
-    else
-        succeed i
+        "feb" ->
+            succeed February
+
+        "mar" ->
+            succeed March
+
+        "apr" ->
+            succeed April
+
+        "may" ->
+            succeed May
+
+        "jun" ->
+            succeed June
+
+        "jul" ->
+            succeed July
+
+        "aug" ->
+            succeed August
+
+        "sep" ->
+            succeed September
+
+        "oct" ->
+            succeed October
+
+        "nov" ->
+            succeed November
+
+        "dec" ->
+            succeed December
+
+        _ ->
+            problem monthHelpMessage
+
+
+
+-----------------------------------------------
+-- WeekDay particle
+-----------------------------------------------
+
+
+weekDay : Parser WeekDay
+weekDay =
+    oneOf
+        [ weekDayString
+        , int 0 6 |> andThen weekDayFromInt
+        ]
+
+
+weekDayString : Parser WeekDay
+weekDayString =
+    chompWhile Char.isAlpha
+        |> getChompedString
+        |> andThen weekDayFromString
+
+
+weekDayFromInt : Int -> Parser WeekDay
+weekDayFromInt i =
+    case i of
+        0 ->
+            succeed Sunday
+
+        1 ->
+            succeed Monday
+
+        2 ->
+            succeed Tuesday
+
+        3 ->
+            succeed Wednesday
+
+        4 ->
+            succeed Thursday
+
+        5 ->
+            succeed Friday
+
+        6 ->
+            succeed Saturday
+
+        _ ->
+            problem weekDayHelpMessage
+
+
+weekDayFromString : String -> Parser WeekDay
+weekDayFromString string =
+    case String.toLower string of
+        "sun" ->
+            succeed Sunday
+
+        "mon" ->
+            succeed Monday
+
+        "tue" ->
+            succeed Tuesday
+
+        "wed" ->
+            succeed Wednesday
+
+        "thu" ->
+            succeed Thursday
+
+        "fri" ->
+            succeed Friday
+
+        "sat" ->
+            succeed Saturday
+
+        _ ->
+            problem weekDayHelpMessage
+
+
+weekDayHelpMessage : String
+weekDayHelpMessage =
+    "Expected the name of a week day (sun, mon, tue etc...) or a number from 0 through 6."

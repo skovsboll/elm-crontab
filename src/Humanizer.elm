@@ -1,6 +1,6 @@
 module Humanizer exposing (toString)
 
-import Cron exposing (Atom(..), Cron(..), Expr(..), Term(..))
+import Cron exposing (Atom(..), Cron(..), Expr(..), Month(..), Term(..), WeekDay(..))
 
 
 toString : Cron -> String
@@ -21,10 +21,10 @@ toString (Cron m h dm mo dw) =
 -----------------------------------------------
 
 
-time : Expr -> Expr -> String
+time : Expr Int -> Expr Int -> String
 time m h =
     case ( m, h ) of
-        ( Single (Simple (Numeric m_)), Single (Simple (Numeric h_)) ) ->
+        ( Single (Simple (Particle m_)), Single (Simple (Particle h_)) ) ->
             "at " ++ String.fromInt h_ ++ ":" ++ String.fromInt m_
 
         _ ->
@@ -37,7 +37,7 @@ time m h =
 -----------------------------------------------
 
 
-minute : Expr -> String
+minute : Expr Int -> String
 minute a =
     case a of
         Single term ->
@@ -51,7 +51,7 @@ minute a =
             "every minute"
 
 
-minuteTerm : Term -> String
+minuteTerm : Term Int -> String
 minuteTerm term =
     case term of
         Step atom int ->
@@ -64,10 +64,10 @@ minuteTerm term =
             minuteAtomToString atom ++ " minutes past"
 
 
-minuteAtomToString : Atom -> String
+minuteAtomToString : Atom Int -> String
 minuteAtomToString atom =
     case atom of
-        Numeric a ->
+        Particle a ->
             "at " ++ String.fromInt a
 
         Range a b ->
@@ -80,7 +80,7 @@ minuteAtomToString atom =
 -----------------------------------------------
 
 
-hour : Expr -> String
+hour : Expr Int -> String
 hour a =
     case a of
         Single term ->
@@ -94,7 +94,7 @@ hour a =
             "every hour"
 
 
-hourTerm : Term -> String
+hourTerm : Term Int -> String
 hourTerm term =
     case term of
         Step atom int ->
@@ -107,10 +107,10 @@ hourTerm term =
             hourAtomToString atom
 
 
-hourAtomToString : Atom -> String
+hourAtomToString : Atom Int -> String
 hourAtomToString atom =
     case atom of
-        Numeric a ->
+        Particle a ->
             "past " ++ String.fromInt a
 
         Range a b ->
@@ -123,7 +123,7 @@ hourAtomToString atom =
 -----------------------------------------------
 
 
-dom : Expr -> String
+dom : Expr Int -> String
 dom a =
     case a of
         Single term ->
@@ -137,7 +137,7 @@ dom a =
             "every day of the month"
 
 
-domTerm : Term -> String
+domTerm : Term Int -> String
 domTerm term =
     case term of
         Step atom int ->
@@ -150,10 +150,10 @@ domTerm term =
             domAtomToFractionString atom ++ " day of the month"
 
 
-domAtomToFractionString : Atom -> String
+domAtomToFractionString : Atom Int -> String
 domAtomToFractionString atom =
     case atom of
-        Numeric a ->
+        Particle a ->
             "on the " ++ ordinalFraction a
 
         Range a b ->
@@ -166,7 +166,7 @@ domAtomToFractionString atom =
 -----------------------------------------------
 
 
-month : Expr -> String
+month : Expr Month -> String
 month a =
     case a of
         Single term ->
@@ -180,11 +180,11 @@ month a =
             "all year"
 
 
-monthTerm : Term -> String
+monthTerm : Term Month -> String
 monthTerm term =
     case term of
         Step atom int ->
-            "every " ++ ordinalFraction int ++ " month " ++ monthAtomAsRange atom 12
+            "every " ++ ordinalFraction int ++ " month " ++ monthAtomAsRange atom December
 
         EveryStep int ->
             "every " ++ ordinalFraction int ++ " month"
@@ -193,67 +193,64 @@ monthTerm term =
             monthAtom atom
 
 
-monthAtom : Atom -> String
+monthAtom : Atom Month -> String
 monthAtom atom =
     case atom of
-        Numeric a ->
-            "in " ++ ordinalMonth a
+        Particle a ->
+            "in " ++ stringFromMonth a
 
         Range a b ->
-            "from " ++ ordinalMonth a ++ " through " ++ ordinalMonth b
+            "from " ++ stringFromMonth a ++ " through " ++ stringFromMonth b
 
 
-monthAtomAsRange : Atom -> Int -> String
+monthAtomAsRange : Atom Month -> Month -> String
 monthAtomAsRange atom max =
     case atom of
-        Numeric from ->
+        Particle from ->
             monthAtom (Range from max)
 
         Range a b ->
             monthAtom (Range a b)
 
 
-ordinalMonth : Int -> String
-ordinalMonth m =
+stringFromMonth : Month -> String
+stringFromMonth m =
     case m of
-        1 ->
+        January ->
             "January"
 
-        2 ->
+        February ->
             "February"
 
-        3 ->
+        March ->
             "March"
 
-        4 ->
+        April ->
             "April"
 
-        5 ->
+        May ->
             "May"
 
-        6 ->
+        June ->
             "June"
 
-        7 ->
+        July ->
             "July"
 
-        8 ->
+        August ->
             "August"
 
-        9 ->
+        September ->
             "September"
 
-        10 ->
+        October ->
             "October"
 
-        11 ->
+        November ->
             "November"
 
-        12 ->
+        December ->
             "December"
-
-        _ ->
-            "Not supported"
 
 
 
@@ -262,7 +259,7 @@ ordinalMonth m =
 -----------------------------------------------
 
 
-dow : Expr -> String
+dow : Expr WeekDay -> String
 dow a =
     case a of
         Single term ->
@@ -276,11 +273,11 @@ dow a =
             "all week"
 
 
-dowTerm : Term -> String
+dowTerm : Term WeekDay -> String
 dowTerm term =
     case term of
         Step atom int ->
-            "every " ++ ordinalFraction int ++ " day of the week " ++ dowAtomAsRange atom 6
+            "every " ++ ordinalFraction int ++ " day of the week " ++ dowAtomAsRange atom Saturday
 
         EveryStep int ->
             "every " ++ ordinalFraction int ++ " day of the week"
@@ -289,52 +286,49 @@ dowTerm term =
             dowAtom atom
 
 
-dowAtom : Atom -> String
+dowAtom : Atom WeekDay -> String
 dowAtom atom =
     case atom of
-        Numeric a ->
+        Particle a ->
             "on " ++ ordinalDayOfWeek a
 
         Range a b ->
             "from " ++ ordinalDayOfWeek a ++ " through " ++ ordinalDayOfWeek b
 
 
-dowAtomAsRange : Atom -> Int -> String
+dowAtomAsRange : Atom WeekDay -> WeekDay -> String
 dowAtomAsRange atom max =
     case atom of
-        Numeric from ->
+        Particle from ->
             dowAtom (Range from max)
 
         Range a b ->
             dowAtom (Range a b)
 
 
-ordinalDayOfWeek : Int -> String
+ordinalDayOfWeek : WeekDay -> String
 ordinalDayOfWeek a =
     case a of
-        0 ->
+        Sunday ->
             "Sunday"
 
-        1 ->
+        Monday ->
             "Monday"
 
-        2 ->
+        Tuesday ->
             "Tuesday"
 
-        3 ->
+        Wednesday ->
             "Wednesday"
 
-        4 ->
+        Thursday ->
             "Thursday"
 
-        5 ->
+        Friday ->
             "Friday"
 
-        6 ->
+        Saturday ->
             "Saturday"
-
-        _ ->
-            "Not supported"
 
 
 
@@ -343,30 +337,30 @@ ordinalDayOfWeek a =
 -----------------------------------------------
 
 
-atomToString : Atom -> String
+atomToString : Atom Int -> String
 atomToString atom =
     case atom of
-        Numeric a ->
+        Particle a ->
             String.fromInt a
 
         Range a b ->
             "from " ++ String.fromInt a ++ " through " ++ String.fromInt b
 
 
-atomAsRange : Atom -> Int -> String
+atomAsRange : Atom Int -> Int -> String
 atomAsRange atom max =
     case atom of
-        Numeric from ->
+        Particle from ->
             atomToString (Range from max)
 
         Range a b ->
             atomToString (Range a b)
 
 
-atomToFractionString : Atom -> String
+atomToFractionString : Atom Int -> String
 atomToFractionString atom =
     case atom of
-        Numeric a ->
+        Particle a ->
             ordinalFraction a
 
         Range a b ->
