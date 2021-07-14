@@ -94,7 +94,7 @@ No fancy syntax supported.
 
 ## Licence 
 
-[Free Public License 1.0.0](https://tldrlegal.com/license/free-public-license-1.0.0#summary)
+[BSD 0-Clause License (0BSD)](https://tldrlegal.com/license/bsd-0-clause-license)
 
 TLDR; Do what you want with it, but don't hold me liable for damages.
 

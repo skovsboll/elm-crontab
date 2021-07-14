@@ -2,7 +2,7 @@
     "type": "package",
     "name": "skovsboll/elm-crontab",
     "summary": "A crontab parser and humanizer in Elm - for the basic UNIX syntax",
-    "license": "https://tldrlegal.com/license/free-public-license-1.0.0",
+    "license": "0BSD",
     "version": "1.0.0",
     "exposed-modules": [
         "Cron",
