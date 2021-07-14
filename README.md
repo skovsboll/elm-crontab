@@ -1,7 +1,7 @@
 elm-crontab
 ===
 
-### A crontab parser and humanizer in Elm -- for the basic UNIX syntax only.
+### A crontab parser and humanizer in Elm -- for the basic UNIX syntax.
 
 Inspired by [rodinalex/elm-cron](https://github.com/rodinalex/elm-cron) but rewritten from scratch using [elm/parser](https://github.com/elm/parser) and elm 0.19.1
 
@@ -87,9 +87,8 @@ See the [tests](https://github.com/skovsboll/elm-crontab/tree/main/tests)
 
 ## Caveats
 
-Does neither support month abbreviations (JAN, FEB, MAR) nor day-of-week abbreviations (SUN, MON, ...).
-
-No other fancy syntax supported.
+Only five segments supported.
+No fancy syntax supported.
 
 
 
