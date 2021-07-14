@@ -20,7 +20,7 @@ Cron.fromString " *   * *   *  *  "
 -- (Ok (Cron Every Every Every Every Every))
 
 Cron.fromString "* * */3 4 *"
--- Ok (Cron Every Every (Single (EveryStep 3)) (Single (Simple (Numeric 4))) Every)
+-- Ok (Cron Every Every (Single (EveryStep 3)) (Single (Simple (Particle April))) Every)
 
 ```
 
@@ -28,10 +28,10 @@ Cron.fromString "* * */3 4 *"
 ## Explaining
 
 ```elm
-import Cron exposing (Atom(..), Cron(..), Expr(..), Term(..))
+import Cron exposing (Atom(..), Cron(..), Expr(..), Term(..), Month(..))
 import Humanizer
 
-Humanizer.toString (Cron Every Every (Single (EveryStep 3)) (Single (Simple (Numeric 4))) Every)
+Humanizer.toString (Cron Every Every (Single (EveryStep 3)) (Single (Simple (Particle April))) Every)
 -- "every minute, every hour, every third day of the month, in April, all week."
 
 ```
@@ -59,12 +59,22 @@ case Cron.fromString "30 10 * * 3" of
 
 ```elm
 
-Cron.fromString "1,2 * 30,31,32 * *"
+Cron.fromString "1,2 * 30,31,32 * xyz"
 --Err
---    [ { col = 19
---      , problem = Problem "day of month, the third number, is 32. I was expecting values in the range from 1 to 31."
+--    [ { col = 15
+--      , problem = Problem "Expected an integer from 1 through 31."
 --      , row = 1
 --      }
+--    ]
+
+Cron.fromString "* * * * xyz"
+--Err 
+--    [ { col = 12
+--      , problem = Problem ("Expected the name of a week day (sun, mon, tue etc...) or a number from 0 through 6.")
+--      , row = 1 }
+--    , { col = 9
+--      , problem = ExpectingSymbol "*"
+--      , row = 1 }
 --    ]
 
 ```
