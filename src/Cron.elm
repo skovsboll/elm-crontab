@@ -1,48 +1,97 @@
-module Cron exposing (Atom(..), Cron(..), Expr(..), Month(..), Term(..), WeekDay(..), fromString)
+module Cron exposing
+    ( Cron(..)
+    , fromString
+    , Expr(..)
+    , Term(..)
+    , Atom(..)
+    , Month(..)
+    , WeekDay(..)
+    )
 
-{-| Parses a classic UNIX style crontab string into a data structure from which
+{-| Parses a classic UNIX style crontab string into a data structure, `Cron`, from which
 you can extract information.
 
 The main entrypoint is the fromString function.
 
     Cron.fromString "* * */3 4 *"
 
-fromString returns a Result (List DeadEnd) Cron.
+fromString returns a `Result (List DeadEnd) Cron`.
 
-A Cron expression consists of exactly five elements:
+#Definition
 
-    1. Minutes
-    2. Hours
-    3. Day of month (1-31)
-    4. Month (1-12 or jan,feb,...)
-    5. Week day (0-6 or mon, tue, ...)
+@docs Cron
+
+
+# API
+
+@docs fromString
+
+
+# Syntax Tree
+
+@docs Expr
+@docs Term
+@docs Atom
+@docs Month
+@docs WeekDay
 
 -}
 
 import Parser exposing (..)
 
 
+{-| A `Cron` expression consists of exactly five elements:
+
+    1. Minutes (0-59)
+    2. Hours (0-23)
+    3. Day of month (1-31)
+    4. Month (1-12 or jan,feb,...)
+    5. Week day (0-6 or mon, tue, ...)
+
+-}
 type Cron
     = Cron (Expr Int) (Expr Int) (Expr Int) (Expr Month) (Expr WeekDay)
 
 
+{-| Represents each of the five parts of a crontab
+
+A Single is just a number or ordinal such as 1 or MON.
+Multiple is a comma-separated list of terms, such as 1,2,5 or JAN,FEB
+Every represents the star meaning "everything matches"
+
+-}
 type Expr a
     = Single (Term a)
     | Multiple (List (Term a))
     | Every
 
 
+{-| A term can be either:
+
+  - Step: A step such as 2/3
+  - EveryStep: A star with a step, \*/4 meaning "every fourth"
+  - Atom: A simple value such as 7 or MON-FRI
+
+-}
 type Term a
     = Step (Atom a) Int
     | EveryStep Int
-    | Simple (Atom a)
+    | Atom (Atom a)
 
 
+{-| An atom is either
+
+  - Particle: a particle or "single value" such as 9
+  - Range: a range with two particles, i.e. 8-12 or FRI-SAT
+
+-}
 type Atom a
     = Particle a
     | Range a a
 
 
+{-| The months of the year
+-}
 type Month
     = January
     | February
@@ -58,6 +107,8 @@ type Month
     | December
 
 
+{-| The week days
+-}
 type WeekDay
     = Sunday
     | Monday
@@ -161,7 +212,7 @@ term particle =
     oneOf
         [ backtrackable (stepTerm particle)
         , everyStepTerm
-        , map Simple (atom particle)
+        , map Atom (atom particle)
         ]
 
 

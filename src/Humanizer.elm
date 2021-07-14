@@ -10,11 +10,18 @@ Will produce:
 
 "every minute, every hour, every third day of the month, in April, all week."
 
+
+# API
+
+@docs toString
+
 -}
 
 import Cron exposing (Atom(..), Cron(..), Expr(..), Month(..), Term(..), WeekDay(..))
 
 
+{-| Tries to explain a crontab expression in a human friendly way
+-}
 toString : Cron -> String
 toString (Cron m h dm mo dw) =
     String.join ", "
@@ -36,7 +43,7 @@ toString (Cron m h dm mo dw) =
 time : Expr Int -> Expr Int -> String
 time m h =
     case ( m, h ) of
-        ( Single (Simple (Particle m_)), Single (Simple (Particle h_)) ) ->
+        ( Single (Atom (Particle m_)), Single (Atom (Particle h_)) ) ->
             "at " ++ String.fromInt h_ ++ ":" ++ String.fromInt m_
 
         _ ->
@@ -72,7 +79,7 @@ minuteTerm term =
         EveryStep int ->
             "every " ++ ordinalFraction int ++ " minute"
 
-        Simple atom ->
+        Atom atom ->
             minuteAtomToString atom ++ " minutes past"
 
 
@@ -115,7 +122,7 @@ hourTerm term =
         EveryStep int ->
             "every " ++ ordinalFraction int ++ " hour"
 
-        Simple atom ->
+        Atom atom ->
             hourAtomToString atom
 
 
@@ -158,7 +165,7 @@ domTerm term =
         EveryStep int ->
             "every " ++ ordinalFraction int ++ " day of the month"
 
-        Simple atom ->
+        Atom atom ->
             domAtomToFractionString atom ++ " day of the month"
 
 
@@ -201,7 +208,7 @@ monthTerm term =
         EveryStep int ->
             "every " ++ ordinalFraction int ++ " month"
 
-        Simple atom ->
+        Atom atom ->
             monthAtom atom
 
 
@@ -294,7 +301,7 @@ dowTerm term =
         EveryStep int ->
             "every " ++ ordinalFraction int ++ " day of the week"
 
-        Simple atom ->
+        Atom atom ->
             dowAtom atom
 
 

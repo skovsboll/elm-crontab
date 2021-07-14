@@ -13,12 +13,12 @@ sunshine =
             [ test "lots of spaces" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron (Single (Simple (Particle 0))) (Single (Simple (Particle 12))) (Single (Simple (Particle 1))) (Single (Simple (Particle January))) (Single (Simple (Particle Tuesday)))))
+                        (Ok (Cron (Single (Atom (Particle 0))) (Single (Atom (Particle 12))) (Single (Atom (Particle 1))) (Single (Atom (Particle January))) (Single (Atom (Particle Tuesday)))))
                         (Cron.fromString "    0   12    1 1 2   ")
             , test "zero prefixed" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron (Single (Simple (Particle 0))) (Single (Simple (Particle 12))) (Single (Simple (Particle 1))) (Single (Simple (Particle January))) (Single (Simple (Particle Tuesday)))))
+                        (Ok (Cron (Single (Atom (Particle 0))) (Single (Atom (Particle 12))) (Single (Atom (Particle 1))) (Single (Atom (Particle January))) (Single (Atom (Particle Tuesday)))))
                         (Cron.fromString "00 012 01 01 02")
             ]
         , describe "stars"
@@ -30,7 +30,7 @@ sunshine =
             , test "combinations" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron Every (Single (Simple (Particle 1))) Every (Single (Simple (Particle January))) Every))
+                        (Ok (Cron Every (Single (Atom (Particle 1))) Every (Single (Atom (Particle January))) Every))
                         (Cron.fromString "    *   1 *   1  *  ")
             ]
         , describe "steps"
@@ -64,41 +64,41 @@ sunshine =
             [ test "single range" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron (Single (Simple (Range 1 2))) Every Every Every Every))
+                        (Ok (Cron (Single (Atom (Range 1 2))) Every Every Every Every))
                         (Cron.fromString "1-2 * * * *")
             , test "all ranges" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron (Single (Simple (Range 1 2))) (Single (Simple (Range 1 2))) (Single (Simple (Range 1 2))) (Single (Simple (Range January February))) (Single (Simple (Range Monday Tuesday)))))
+                        (Ok (Cron (Single (Atom (Range 1 2))) (Single (Atom (Range 1 2))) (Single (Atom (Range 1 2))) (Single (Atom (Range January February))) (Single (Atom (Range Monday Tuesday)))))
                         (Cron.fromString "1-2 1-2 1-2 1-2 1-2")
             , test "combinations" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron Every (Single (Simple (Range 2 5))) (Single (Simple (Range 1 2))) (Single (Simple (Particle January))) (Single (Simple (Range Monday Tuesday)))))
+                        (Ok (Cron Every (Single (Atom (Range 2 5))) (Single (Atom (Range 1 2))) (Single (Atom (Particle January))) (Single (Atom (Range Monday Tuesday)))))
                         (Cron.fromString "* 2-5 1-2 1 1-2")
             ]
         , describe "sequences"
             [ test "sequence of literals" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron (Multiple [ Simple (Particle 1), Simple (Particle 2) ]) Every Every Every Every))
+                        (Ok (Cron (Multiple [ Atom (Particle 1), Atom (Particle 2) ]) Every Every Every Every))
                         (Cron.fromString "1,2 * * * *")
             , test "sequence of ranges and literals" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron (Multiple [ Simple (Particle 1), Simple (Range 2 4) ]) Every Every Every Every))
+                        (Ok (Cron (Multiple [ Atom (Particle 1), Atom (Range 2 4) ]) Every Every Every Every))
                         (Cron.fromString "1,2-4 * * * *")
             , test "sequence of ranges, literals and steps" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron (Multiple [ Simple (Particle 1), Step (Range 2 4) 3 ]) Every Every Every Every))
+                        (Ok (Cron (Multiple [ Atom (Particle 1), Step (Range 2 4) 3 ]) Every Every Every Every))
                         (Cron.fromString "1,2-4/3 * * * *")
             ]
         , describe "ordinals"
             [ test "named week days" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron Every Every Every Every (Single (Simple (Particle Sunday)))))
+                        (Ok (Cron Every Every Every Every (Single (Atom (Particle Sunday)))))
                         (Cron.fromString "* * * * SUN")
             , test "named week days and steps" <|
                 \() ->
@@ -108,12 +108,12 @@ sunshine =
             , test "named months" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron Every Every Every (Single (Simple (Particle February))) Every))
+                        (Ok (Cron Every Every Every (Single (Atom (Particle February))) Every))
                         (Cron.fromString "* *  *  FEB *")
             , test "named months in multiple ranges" <|
                 \() ->
                     Expect.equal
-                        (Ok (Cron Every Every Every (Multiple [ Simple (Range February May), Simple (Range July October) ]) Every))
+                        (Ok (Cron Every Every Every (Multiple [ Atom (Range February May), Atom (Range July October) ]) Every))
                         (Cron.fromString "* * * FEB-may,jul-oct *")
             ]
         ]
