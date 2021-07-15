@@ -278,17 +278,17 @@ int : Int -> Int -> Parser Int
 int min max =
     getChompedString (chompWhile Char.isDigit)
         |> andThen
-            (\i ->
-                case String.toInt i of
+            (\str ->
+                case String.toInt str of
                     Just i2 ->
                         if i2 >= min && i2 <= max then
                             succeed i2
 
                         else
-                            problem ("Expected an integer from " ++ String.fromInt min ++ " through " ++ String.fromInt max ++ ".")
+                            problem ("The number " ++ String.fromInt i2 ++ " is unexpected. I need an integer from " ++ String.fromInt min ++ " through " ++ String.fromInt max ++ ".")
 
                     Nothing ->
-                        problem "not a valid int"
+                        problem ("I was expecting a number from " ++ String.fromInt min ++ " through " ++ String.fromInt max ++ ". Instead I got '" ++ str ++ "'.")
             )
 
 
