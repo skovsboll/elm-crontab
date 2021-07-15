@@ -44,7 +44,7 @@ time : Expr Int -> Expr Int -> String
 time m h =
     case ( m, h ) of
         ( Single (Atom (Particle m_)), Single (Atom (Particle h_)) ) ->
-            "at " ++ String.fromInt h_ ++ ":" ++ String.fromInt m_
+            "at " ++ withLeadingZero h_ ++ ":" ++ withLeadingZero m_
 
         _ ->
             minute m ++ ", " ++ hour h
@@ -87,10 +87,16 @@ minuteAtomToString : Atom Int -> String
 minuteAtomToString atom =
     case atom of
         Particle a ->
-            "at " ++ String.fromInt a
+            "at " ++ withLeadingZero a
 
         Range a b ->
             "from " ++ String.fromInt a ++ " through " ++ String.fromInt b
+
+
+withLeadingZero : Int -> String
+withLeadingZero i =
+    String.fromInt i
+        |> String.padLeft 2 '0'
 
 
 
@@ -130,7 +136,7 @@ hourAtomToString : Atom Int -> String
 hourAtomToString atom =
     case atom of
         Particle a ->
-            "past " ++ String.fromInt a
+            "past " ++ withLeadingZero a
 
         Range a b ->
             "from " ++ String.fromInt a ++ " through " ++ String.fromInt b ++ " o'clock"

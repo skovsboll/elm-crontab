@@ -47,9 +47,12 @@ import Parser
 case Cron.fromString "30 10 * * 3" of
     Ok cron ->
         Humanizer.toString cron
-    Err errors ->
-        errors
-            |> Parser.deadEndsToString
+    Err deadEnds ->
+        let
+            _ = Debug.log "deadEnds" deadEnds
+        in
+            "error"
+            
 
 -- at 10:30, every day of the month, all year, on Wednesday.
 

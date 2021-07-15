@@ -21,6 +21,11 @@ sunshine =
                     Expect.equal
                         "at 10:30, every day of the month, all year, all week."
                         (explain "30 10 * * *")
+            , test "proper time of day, leading zeroes" <|
+                \() ->
+                    Expect.equal
+                        "at 09:05, every day of the month, all year, all week."
+                        (explain "5 9 * * *")
             , test "hours only" <|
                 \() ->
                     Expect.equal
