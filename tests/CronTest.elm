@@ -126,34 +126,34 @@ rain =
             [ test "minutes outside range" <|
                 \() ->
                     expectFirstProblem
-                        (Problem "Expected an integer from 0 through 59.")
+                        (Problem "The number 61 is unexpected. I need an integer from 0 through 59.")
                         (Cron.fromString "61 0 0 0 0")
             , test "hours outside range" <|
                 \() ->
                     expectFirstProblem
-                        (Problem "Expected an integer from 0 through 23.")
+                        (Problem "The number 25 is unexpected. I need an integer from 0 through 23.")
                         (Cron.fromString "0 25 0 0 0")
             , test "DOM outside range" <|
                 \() ->
                     expectFirstProblem
-                        (Problem "Expected an integer from 1 through 31.")
+                        (Problem "The number 32 is unexpected. I need an integer from 1 through 31.")
                         (Cron.fromString "0 0 32 0 0")
             , test "month outside range" <|
                 \() ->
                     expectFirstProblem
-                        (Problem "Expected an integer from 1 through 12.")
+                        (Problem "The number 13 is unexpected. I need an integer from 1 through 12.")
                         (Cron.fromString "0 0 1 13 0")
             , test "DOW outside range" <|
                 \() ->
                     expectFirstProblem
-                        (Problem "Expected an integer from 0 through 6.")
+                        (Problem "The number 10 is unexpected. I need an integer from 0 through 6.")
                         (Cron.fromString "0 0 3 1 10")
             ]
         , describe "ranges"
             [ test "out of range" <|
                 \() ->
                     expectFirstProblem
-                        (Problem "Expected an integer from 0 through 6.")
+                        (Problem "The number 7 is unexpected. I need an integer from 0 through 6.")
                         (Cron.fromString "* 2-5 1-2 1 7-8")
             , test "double range" <|
                 \() ->
@@ -182,7 +182,7 @@ rain =
             [ test "out of range" <|
                 \() ->
                     expectFirstProblem
-                        (Problem "Expected an integer from 1 through 31.")
+                        (Problem "The number 32 is unexpected. I need an integer from 1 through 31.")
                         (Cron.fromString "1,2 * 30,31,32 * *")
             ]
         ]
