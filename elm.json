@@ -3,7 +3,7 @@
     "name": "skovsboll/elm-crontab",
     "summary": "A crontab parser and humanizer in Elm - for the basic UNIX syntax",
     "license": "0BSD",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "exposed-modules": [
         "Cron",
         "Humanizer"
