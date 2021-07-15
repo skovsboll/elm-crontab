@@ -288,7 +288,7 @@ int min max =
                             problem ("The number " ++ String.fromInt i2 ++ " is unexpected. I need an integer from " ++ String.fromInt min ++ " through " ++ String.fromInt max ++ ".")
 
                     Nothing ->
-                        problem ("I was expecting a number from " ++ String.fromInt min ++ " through " ++ String.fromInt max ++ ". Instead I got '" ++ str ++ "'.")
+                        problem ("I was expecting a number from " ++ String.fromInt min ++ " through " ++ String.fromInt max ++ ".")
             )
 
 
