@@ -1,7 +1,7 @@
 module CronTest exposing (..)
 
 import Cron exposing (Atom(..), Cron(..), Expr(..), Month(..), Term(..), WeekDay(..))
-import Expect exposing (Expectation, fail, pass)
+import Expect exposing (Expectation, fail)
 import Parser exposing (DeadEnd, Problem(..))
 import Test exposing (..)
 

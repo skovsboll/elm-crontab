@@ -1,10 +1,10 @@
 module HumanizerTest exposing (sunshine)
 
-import Cron exposing (Atom(..), Cron(..), Expr(..), Term(..))
+import Cron
 import Expect
 import Humanizer
 import Parser
-import Test exposing (Test, describe, only, test)
+import Test exposing (Test, describe, test)
 
 
 sunshine : Test

@@ -382,16 +382,6 @@ atomAsRange atom max =
             atomToString (Range a b)
 
 
-atomToFractionString : Atom Int -> String
-atomToFractionString atom =
-    case atom of
-        Particle a ->
-            ordinalFraction a
-
-        Range a b ->
-            "from the " ++ ordinalFraction a ++ " through the " ++ ordinalFraction b
-
-
 ordinalFraction : Int -> String
 ordinalFraction int =
     case int of
