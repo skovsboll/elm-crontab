@@ -135,11 +135,17 @@ fromString input =
 cron : Parser Cron
 cron =
     succeed Cron
+        |. spaces
         |= expr (int 0 59)
+        |. atLeastOneSpace
         |= expr (int 0 23)
+        |. atLeastOneSpace
         |= expr (int 1 31)
+        |. atLeastOneSpace
         |= expr month
+        |. atLeastOneSpace
         |= expr weekDay
+        |. spaces
         |. end
 
 
@@ -152,12 +158,10 @@ cron =
 expr : Parser a -> Parser (Expr a)
 expr particle =
     succeed identity
-        |. spaces
         |= oneOf
             [ singleOrMulti particle
             , backtrackable everyExpr
             ]
-        |. spaces
 
 
 everyExpr : Parser (Expr a)
@@ -199,6 +203,18 @@ multipleTermsHelp particle revTerms =
             |= term particle
         , succeed () |> andThen (always (problem "not a list!"))
         ]
+
+
+atLeastOneSpace : Parser ()
+atLeastOneSpace =
+    let
+        isSpace : Char -> Bool
+        isSpace =
+            \c -> c == ' ' || c == '\n' || c == '\u{000D}'
+    in
+    succeed ()
+        |. chompIf isSpace
+        |. chompWhile isSpace
 
 
 

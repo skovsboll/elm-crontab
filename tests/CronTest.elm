@@ -122,7 +122,12 @@ sunshine =
 rain : Test
 rain =
     describe "rain"
-        [ describe "out of range"
+        [ test "not enough spaces" <|
+            \() ->
+                expectFirstProblem
+                    UnexpectedChar
+                    (Cron.fromString "0****")
+        , describe "out of range"
             [ test "minutes outside range" <|
                 \() ->
                     expectFirstProblem
@@ -158,19 +163,19 @@ rain =
             , test "double range" <|
                 \() ->
                     expectFirstProblem
-                        (Problem "Expected the name of a month (jan, feb, mar etc...) or a number from 1 through 12.")
+                        UnexpectedChar
                         (Cron.fromString "* * 1-2-3 * *")
             ]
         , describe "steps"
             [ test "every 0 step" <|
                 \() ->
                     expectFirstProblem
-                        (Problem "Expected the name of a week day (sun, mon, tue etc...) or a number from 0 through 6.")
+                        UnexpectedChar
                         (Cron.fromString "* * * 1/0 *")
             , test "Multiple steps" <|
                 \() ->
                     expectFirstProblem
-                        (Problem "Expected the name of a week day (sun, mon, tue etc...) or a number from 0 through 6.")
+                        UnexpectedChar
                         (Cron.fromString "* * * 1-2/1-3 *")
             , test "Multiple steps at the end" <|
                 \() ->
