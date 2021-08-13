@@ -9,7 +9,7 @@ import Test exposing (Test, describe, test)
 
 sunshine : Test
 sunshine =
-    describe "sunshine"
+    describe "humanizer"
         [ describe "numerical expressions"
             [ test "stars" <|
                 \() ->
@@ -36,6 +36,21 @@ sunshine =
                     Expect.equal
                         "at 30 minutes past, every hour, every day of the month, all year, all week."
                         (explain "30 * * * *")
+            , test "stroke of" <|
+                \() ->
+                    Expect.equal
+                        "at the stroke of every hour, every day of the month, all year, all week."
+                        (explain "0 * * * *")
+            , test "stroke of with range" <|
+                \() ->
+                    Expect.equal
+                        "at the stroke of 1 through 2 o'clock, every day of the month, all year, all week."
+                        (explain "0 1-2 * * *")
+            , test "minutes - no padding" <|
+                \() ->
+                    Expect.equal
+                        "at 1 minute past, every hour, every day of the month, all year, all week."
+                        (explain "1 * * * *")
             , test "day of month" <|
                 \() ->
                     Expect.equal
@@ -52,12 +67,51 @@ sunshine =
                         "every minute, every hour, every day of the month, all year, on Sunday."
                         (explain "* * * * 0")
             ]
+        , describe "multiple"
+            [ test "days of months" <|
+                \() ->
+                    Expect.equal
+                        "every minute, every hour, on the first day of the month and on the third day of the month and on the fourth day of the month, all year, all week."
+                        (explain "* * 1,3,4 * *")
+            ]
+        , describe "simplifications"
+            [ test "all five" <|
+                \() ->
+                    Expect.equal
+                        "at 02:01, on the third day of the month, in April, on Friday."
+                        (explain "1 2 3 4 5")
+            , test "first four" <|
+                \() ->
+                    Expect.equal
+                        "at 02:01, on the third day of the month, in April."
+                        (explain "1 2 3 4 *")
+            , test "first three" <|
+                \() ->
+                    Expect.equal
+                        "at 02:01, on the third day of the month"
+                        (explain "1 2 3 * *")
+            , test "first two" <|
+                \() ->
+                    Expect.equal
+                        "at 02:01"
+                        (explain "1 2 * * *")
+            , test "first one" <|
+                \() ->
+                    Expect.equal
+                        "at 1 minute past every hour"
+                        (explain "1 * * * *")
+            ]
         , describe "steps"
             [ test "stars" <|
                 \() ->
                     Expect.equal
                         "every second minute, every third hour, every fourth day of the month, every fifth month, every sixth day of the week."
                         (explain "*/2 */3 */4 */5 */6")
+            , test "step ordinals" <|
+                \() ->
+                    Expect.equal
+                        "every 11th minute, every hour, every day of the month, all year, all week."
+                        (explain "*/11 * * * *")
             , test "steps and start" <|
                 \() ->
                     Expect.equal

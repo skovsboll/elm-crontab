@@ -94,6 +94,13 @@ sunshine =
                         (Ok (Cron (Multiple [ Atom (Particle 1), Step (Range 2 4) 3 ]) Every Every Every Every))
                         (Cron.fromString "1,2-4/3 * * * *")
             ]
+        , describe "day of week"
+            [ test "7" <|
+                \() ->
+                    Expect.equal
+                        (Ok (Cron Every Every Every Every (Single (Atom (Particle Sunday)))))
+                        (Cron.fromString "* * * * 7")
+            ]
         , describe "ordinals"
             [ test "named week days" <|
                 \() ->
@@ -165,6 +172,11 @@ rain =
                     expectFirstProblem
                         UnexpectedChar
                         (Cron.fromString "* * 1-2-3 * *")
+            , test "wrapped range" <|
+                \() ->
+                    expectFirstProblem
+                        (Problem "a range can not wrap")
+                        (Cron.fromString "* * 5-2 * *")
             ]
         , describe "steps"
             [ test "every 0 step" <|
