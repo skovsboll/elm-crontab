@@ -24,13 +24,17 @@ import Cron exposing (Atom(..), Cron(..), Expr(..), Month(..), Term(..), WeekDay
 -}
 toString : Cron -> String
 toString (Cron m h dm mo dw) =
-    String.join ", "
-        [ time m h
-        , dom dm
-        , month mo
-        , dow dw
-        ]
-        ++ "."
+    let
+        items : List String
+        items =
+            [ time m h
+            , dom dm
+            , month mo
+            , dow dw
+            ]
+                |> List.filterMap identity
+    in
+    String.join ", " items ++ "."
 
 
 
@@ -40,14 +44,26 @@ toString (Cron m h dm mo dw) =
 -----------------------------------------------
 
 
-time : Expr Int -> Expr Int -> String
+time : Expr Int -> Expr Int -> Maybe String
 time m h =
     case ( m, h ) of
+        ( Single (Atom (Particle 0)), h_ ) ->
+            Just ("at the stroke of " ++ hour h_)
+
         ( Single (Atom (Particle m_)), Single (Atom (Particle h_)) ) ->
-            "at " ++ withLeadingZero h_ ++ ":" ++ withLeadingZero m_
+            Just ("at " ++ withLeadingZero h_ ++ ":" ++ withLeadingZero m_)
+
+        ( Every, Single (Atom (Particle h_)) ) ->
+            Just ("every minute " ++ hour h)
+
+        ( Single (Atom (Particle m_)), Every ) ->
+            Just (minute m ++ " every hour")
+
+        ( Every, Every ) ->
+            Just "every minute"
 
         _ ->
-            minute m ++ ", " ++ hour h
+            Just (minute m ++ " past " ++ hour h)
 
 
 
@@ -80,17 +96,25 @@ minuteTerm term =
             "every " ++ ordinalFraction int ++ " minute"
 
         Atom atom ->
-            minuteAtomToString atom ++ " minutes past"
+            minuteAtomToString atom
+
+
+bent i =
+    if i == 1 then
+        " minute"
+
+    else
+        " minutes"
 
 
 minuteAtomToString : Atom Int -> String
 minuteAtomToString atom =
     case atom of
         Particle a ->
-            "at " ++ withLeadingZero a
+            "at " ++ String.fromInt a ++ bent a ++ " past"
 
         Range a b ->
-            "from " ++ String.fromInt a ++ " through " ++ String.fromInt b
+            "from " ++ String.fromInt a ++ " through " ++ String.fromInt b ++ " minutes"
 
 
 withLeadingZero : Int -> String
@@ -139,7 +163,7 @@ hourAtomToString atom =
             "past " ++ withLeadingZero a
 
         Range a b ->
-            "from " ++ String.fromInt a ++ " through " ++ String.fromInt b ++ " o'clock"
+            String.fromInt a ++ " through " ++ String.fromInt b ++ " o'clock"
 
 
 
@@ -148,18 +172,20 @@ hourAtomToString atom =
 -----------------------------------------------
 
 
-dom : Expr Int -> String
+dom : Expr Int -> Maybe String
 dom a =
     case a of
         Single term ->
-            domTerm term
+            Just (domTerm term)
 
         Multiple terms ->
-            List.map domTerm terms
-                |> String.join " and "
+            Just
+                (List.map domTerm terms
+                    |> String.join " and "
+                )
 
         Every ->
-            "every day of the month"
+            Nothing
 
 
 domTerm : Term Int -> String
@@ -191,18 +217,20 @@ domAtomToFractionString atom =
 -----------------------------------------------
 
 
-month : Expr Month -> String
+month : Expr Month -> Maybe String
 month a =
     case a of
         Single term ->
-            monthTerm term
+            Just (monthTerm term)
 
         Multiple terms ->
-            List.map monthTerm terms
-                |> String.join " and "
+            Just
+                (List.map monthTerm terms
+                    |> String.join " and "
+                )
 
         Every ->
-            "all year"
+            Nothing
 
 
 monthTerm : Term Month -> String
@@ -284,18 +312,20 @@ stringFromMonth m =
 -----------------------------------------------
 
 
-dow : Expr WeekDay -> String
+dow : Expr WeekDay -> Maybe String
 dow a =
     case a of
         Single term ->
-            dowTerm term
+            Just (dowTerm term)
 
         Multiple terms ->
-            List.map dowTerm terms
-                |> String.join " and "
+            Just
+                (List.map dowTerm terms
+                    |> String.join " and "
+                )
 
         Every ->
-            "all week"
+            Nothing
 
 
 dowTerm : Term WeekDay -> String
@@ -386,7 +416,7 @@ ordinalFraction : Int -> String
 ordinalFraction int =
     case int of
         1 ->
-            ""
+            "first"
 
         2 ->
             "second"
@@ -416,4 +446,4 @@ ordinalFraction int =
             "tenth"
 
         a ->
-            String.fromInt a ++ "."
+            String.fromInt a ++ "th"

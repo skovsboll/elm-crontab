@@ -136,17 +136,27 @@ cron : Parser Cron
 cron =
     succeed Cron
         |. spaces
-        |= expr (int 0 59)
+        |= expr (int 0 59) compare
         |. atLeastOneSpace
-        |= expr (int 0 23)
+        |= expr (int 0 23) compare
         |. atLeastOneSpace
-        |= expr (int 1 31)
+        |= expr (int 1 31) compare
         |. atLeastOneSpace
-        |= expr month
+        |= expr month compareMonth
         |. atLeastOneSpace
-        |= expr weekDay
+        |= expr weekDay compareWeekday
         |. spaces
         |. end
+
+
+compareWeekday : WeekDay -> WeekDay -> Order
+compareWeekday a b =
+    compare (intFromWeekDay a) (intFromWeekDay b)
+
+
+compareMonth : Month -> Month -> Order
+compareMonth a b =
+    compare (intFromMonth a) (intFromMonth b)
 
 
 
@@ -155,8 +165,8 @@ cron =
 -----------------------------------------------
 
 
-expr : Parser a -> Parser (Expr a)
-expr particle =
+expr : Parser a -> (a -> a -> Order) -> Parser (Expr a)
+expr particle comparer =
     succeed identity
         |= oneOf
             [ singleOrMulti particle
@@ -372,6 +382,46 @@ monthFromInt i =
             problem monthHelpMessage
 
 
+intFromMonth : Month -> Int
+intFromMonth m =
+    case m of
+        January ->
+            1
+
+        February ->
+            2
+
+        March ->
+            3
+
+        April ->
+            4
+
+        May ->
+            5
+
+        June ->
+            6
+
+        July ->
+            7
+
+        August ->
+            8
+
+        September ->
+            9
+
+        October ->
+            10
+
+        November ->
+            11
+
+        December ->
+            12
+
+
 monthHelpMessage : String
 monthHelpMessage =
     "Expected the name of a month (jan, feb, mar etc...) or a number from 1 through 12."
@@ -430,7 +480,7 @@ weekDay : Parser WeekDay
 weekDay =
     oneOf
         [ weekDayString
-        , int 0 6 |> andThen weekDayFromInt
+        , int 0 7 |> andThen weekDayFromInt
         ]
 
 
@@ -465,8 +515,36 @@ weekDayFromInt i =
         6 ->
             succeed Saturday
 
+        7 ->
+            succeed Sunday
+
         _ ->
             problem weekDayHelpMessage
+
+
+intFromWeekDay : WeekDay -> Int
+intFromWeekDay weekday =
+    case weekday of
+        Sunday ->
+            0
+
+        Monday ->
+            1
+
+        Tuesday ->
+            2
+
+        Wednesday ->
+            3
+
+        Thursday ->
+            4
+
+        Friday ->
+            5
+
+        Saturday ->
+            6
 
 
 weekDayFromString : String -> Parser WeekDay

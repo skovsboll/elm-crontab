@@ -158,14 +158,14 @@ rain =
             , test "DOW outside range" <|
                 \() ->
                     expectFirstProblem
-                        (Problem "The number 10 is unexpected. I need an integer from 0 through 6.")
+                        (Problem "The number 10 is unexpected. I need an integer from 0 through 7.")
                         (Cron.fromString "0 0 3 1 10")
             ]
         , describe "ranges"
             [ test "out of range" <|
                 \() ->
                     expectFirstProblem
-                        (Problem "The number 7 is unexpected. I need an integer from 0 through 6.")
+                        (Problem "The number 8 is unexpected. I need an integer from 0 through 7.")
                         (Cron.fromString "* 2-5 1-2 1 7-8")
             , test "double range" <|
                 \() ->
